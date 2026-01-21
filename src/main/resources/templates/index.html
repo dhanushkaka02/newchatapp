@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,8 +19,8 @@
             margin: 0;
             padding: 0;
             background: radial-gradient(circle at top left, #6a5af9 0%, transparent 40%),
-                        radial-gradient(circle at bottom right, #ff7eb3 0%, transparent 45%),
-                        linear-gradient(135deg, #0f172a, #111827);
+                radial-gradient(circle at bottom right, #ff7eb3 0%, transparent 45%),
+                linear-gradient(135deg, #0f172a, #111827);
             color: #fff;
             overflow-x: hidden;
         }
@@ -29,7 +30,7 @@
             position: fixed;
             top: 0;
             width: 100%;
-            z-index: 1000;
+            z-index: 6000;
             padding: 12px 18px;
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(12px);
@@ -58,6 +59,19 @@
             color: #93c5fd;
         }
 
+        /* ✅ Full page overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 4500;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
         /* Main chat shell */
         .chat-shell {
             margin-top: 80px;
@@ -74,7 +88,7 @@
             position: relative;
         }
 
-        /* Left user panel */
+        /* Users panel (desktop normal) */
         .users-panel {
             background: rgba(255, 255, 255, 0.06);
             border-right: 1px solid rgba(255, 255, 255, 0.12);
@@ -257,47 +271,39 @@
             text-decoration: underline;
         }
 
-        /* ✅ Overlay for mobile drawer */
-        .overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.45);
-            z-index: 1500;
-        }
-
-        .overlay.show {
-            display: block;
-        }
-
-        /* ✅ Mobile users button */
+        /* ✅ Mobile button hidden in desktop */
         .mobile-users-btn {
             display: none;
         }
 
-        /* ✅ Responsive drawer */
+        /* ✅ Mobile drawer fix */
         @media (max-width: 992px) {
+
+            /* ✅ drawer fixed */
             .users-panel {
-                display: block;
-                position: absolute;
+                display: block !important;
+                position: fixed !important;
                 top: 0;
                 left: 0;
+                height: 100vh;
                 width: 85%;
                 max-width: 320px;
-                height: 100%;
-                z-index: 2000;
-                transform: translateX(-105%);
-                transition: transform 0.25s ease;
-                border-right: 1px solid rgba(255, 255, 255, 0.12);
-                border-radius: 18px 0 0 18px;
+                z-index: 5000;
+                transform: translateX(-110%);
+                transition: transform 0.3s ease;
+                border-radius: 0 18px 18px 0;
+                padding-top: 90px;
+                flex: none !important;
+                max-width: none !important;
             }
 
             .users-panel.show {
                 transform: translateX(0);
             }
 
+            /* ✅ show button in mobile */
             .mobile-users-btn {
-                display: inline-flex;
+                display: inline-flex !important;
                 align-items: center;
                 justify-content: center;
                 width: 42px;
@@ -312,6 +318,12 @@
 
             .mobile-users-btn:hover {
                 transform: translateY(-1px);
+            }
+
+            /* ✅ users panel should not take space in row */
+            .users-panel.col-4 {
+                width: 0 !important;
+                padding: 0 !important;
             }
         }
     </style>
@@ -332,12 +344,12 @@
     </div>
 </nav>
 
+<!-- ✅ overlay fixed full page -->
+<div class="overlay" id="overlay"></div>
+
 <!-- Chat Layout -->
 <div class="container-fluid d-flex justify-content-center align-items-center">
     <div class="chat-shell row g-0">
-
-        <!-- ✅ overlay (only used in mobile) -->
-        <div class="overlay" id="overlay"></div>
 
         <!-- Users Panel -->
         <div class="col-4 col-lg-3 p-3 users-panel">
@@ -359,7 +371,7 @@
         <div class="col-12 col-lg-9 chat-panel">
 
             <div class="chat-header">
-                <!-- ✅ mobile button -->
+                <!-- ✅ mobile users drawer button -->
                 <button type="button" class="mobile-users-btn" id="openUsersBtn" title="Users">
                     <i class="fa-solid fa-users"></i>
                 </button>
@@ -402,7 +414,6 @@
     let selectedUserId = null;
     let stompClient = null;
     const username = '[[${username}]]';
-
     const notificationState = {};
 
     // ✅ mobile drawer controls
@@ -410,19 +421,15 @@
     const usersPanel = document.querySelector(".users-panel");
     const overlay = document.getElementById("overlay");
 
-    if (openUsersBtn) {
-        openUsersBtn.addEventListener("click", () => {
-            usersPanel.classList.add("show");
-            overlay.classList.add("show");
-        });
-    }
+    openUsersBtn.addEventListener("click", () => {
+        usersPanel.classList.add("show");
+        overlay.classList.add("show");
+    });
 
-    if (overlay) {
-        overlay.addEventListener("click", () => {
-            usersPanel.classList.remove("show");
-            overlay.classList.remove("show");
-        });
-    }
+    overlay.addEventListener("click", () => {
+        usersPanel.classList.remove("show");
+        overlay.classList.remove("show");
+    });
 
     function connect(event) {
         const socket = new SockJS('/ws');
@@ -458,14 +465,14 @@
         const badgeVisible = notificationState[user.username] ? 'inline-block' : 'none';
 
         listItem.innerHTML = `
-            <img src="https://png.pngtree.com/png-clipart/20240603/original/pngtree-cat-logo-design-png-image_15240244.png"
-                 alt="${user.username}" class="rounded-circle" width="42" height="42">
-            <div class="flex-grow-1">
-                <div class="user-name">${user.username}</div>
-                <div style="font-size:12px;color:rgba(255,255,255,0.65)">Tap to chat</div>
-            </div>
-            <span class="badge badge-new" id="notify-${user.username}" style="display:${badgeVisible};">NEW</span>
-        `;
+        <img src="https://png.pngtree.com/png-clipart/20240603/original/pngtree-cat-logo-design-png-image_15240244.png"
+             alt="${user.username}" class="rounded-circle" width="42" height="42">
+        <div class="flex-grow-1">
+            <div class="user-name">${user.username}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.65)">Tap to chat</div>
+        </div>
+        <span class="badge badge-new" id="notify-${user.username}" style="display:${badgeVisible};">NEW</span>
+    `;
 
         listItem.addEventListener('click', userItemClick);
         connectedUsersList.appendChild(listItem);
@@ -528,7 +535,6 @@
             stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
             displayMessage(username, messageContent);
             messageInput.value = '';
-            chatArea.scrollTop = chatArea.scrollHeight;
         }
     }
 
@@ -539,10 +545,8 @@
 
         findAndDisplayConnectedUsers().then(() => {
             Object.keys(notificationState).forEach(userId => {
-                if (notificationState[userId]) {
-                    const notificationBadge = document.getElementById(`notify-${userId}`);
-                    if (notificationBadge) notificationBadge.style.display = 'inline-block';
-                }
+                const badge = document.getElementById(`notify-${userId}`);
+                if (badge) badge.style.display = 'inline-block';
             });
         });
 
@@ -564,4 +568,5 @@
 </script>
 
 </body>
+
 </html>
