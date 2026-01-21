@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,6 +71,7 @@
             backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.14);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+            position: relative;
         }
 
         /* Left user panel */
@@ -257,13 +257,61 @@
             text-decoration: underline;
         }
 
-        /* Responsive */
+        /* ✅ Overlay for mobile drawer */
+        .overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1500;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* ✅ Mobile users button */
+        .mobile-users-btn {
+            display: none;
+        }
+
+        /* ✅ Responsive drawer */
         @media (max-width: 992px) {
             .users-panel {
-                display: none;
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 85%;
+                max-width: 320px;
+                height: 100%;
+                z-index: 2000;
+                transform: translateX(-105%);
+                transition: transform 0.25s ease;
+                border-right: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 18px 0 0 18px;
             }
-            .chat-shell {
-                width: 95%;
+
+            .users-panel.show {
+                transform: translateX(0);
+            }
+
+            .mobile-users-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.18);
+                background: rgba(255, 255, 255, 0.10);
+                color: white;
+                cursor: pointer;
+                transition: 0.2s ease;
+            }
+
+            .mobile-users-btn:hover {
+                transform: translateY(-1px);
             }
         }
     </style>
@@ -275,7 +323,6 @@
 <nav class="navbar-custom">
     <a class="navbar-brand" href="#">💬 Chat Application</a>
     <div class="social-icons">
-        <!-- ✅ FIXED LINK -->
         <a href="https://www.linkedin.com/in/dhanush-kaka-277251291/" target="_blank" title="LinkedIn">
             <i class="fab fa-linkedin"></i>
         </a>
@@ -288,6 +335,9 @@
 <!-- Chat Layout -->
 <div class="container-fluid d-flex justify-content-center align-items-center">
     <div class="chat-shell row g-0">
+
+        <!-- ✅ overlay (only used in mobile) -->
+        <div class="overlay" id="overlay"></div>
 
         <!-- Users Panel -->
         <div class="col-4 col-lg-3 p-3 users-panel">
@@ -309,6 +359,11 @@
         <div class="col-12 col-lg-9 chat-panel">
 
             <div class="chat-header">
+                <!-- ✅ mobile button -->
+                <button type="button" class="mobile-users-btn" id="openUsersBtn" title="Users">
+                    <i class="fa-solid fa-users"></i>
+                </button>
+
                 <i class="fa-solid fa-comments" style="color:#93c5fd;"></i>
                 <div class="title">Select a user to start chat</div>
             </div>
@@ -349,6 +404,25 @@
     const username = '[[${username}]]';
 
     const notificationState = {};
+
+    // ✅ mobile drawer controls
+    const openUsersBtn = document.getElementById("openUsersBtn");
+    const usersPanel = document.querySelector(".users-panel");
+    const overlay = document.getElementById("overlay");
+
+    if (openUsersBtn) {
+        openUsersBtn.addEventListener("click", () => {
+            usersPanel.classList.add("show");
+            overlay.classList.add("show");
+        });
+    }
+
+    if (overlay) {
+        overlay.addEventListener("click", () => {
+            usersPanel.classList.remove("show");
+            overlay.classList.remove("show");
+        });
+    }
 
     function connect(event) {
         const socket = new SockJS('/ws');
@@ -410,6 +484,12 @@
 
         delete notificationState[selectedUserId];
         fetchAndDisplayUserChat();
+
+        // ✅ close drawer in mobile after selecting user
+        if (window.innerWidth <= 992) {
+            usersPanel.classList.remove("show");
+            overlay.classList.remove("show");
+        }
     }
 
     async function fetchAndDisplayUserChat() {
