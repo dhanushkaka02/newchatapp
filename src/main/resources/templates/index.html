@@ -292,6 +292,83 @@
                 transform: translateX(0);
             }
         }
+        /* ✅ MOBILE drawer - IMPORTANT */
+/* ✅ Mobile Drawer default hidden */
+.mobile-users-panel {
+    display: none;
+}
+
+/* ✅ Mobile button hidden on desktop */
+.mobile-users-btn {
+    display: none;
+}
+
+/* ✅ Mobile Responsive Drawer Rules */
+@media (max-width: 992px) {
+
+    /* ✅ show the users icon button */
+    .mobile-users-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.10);
+        color: #fff;
+        cursor: pointer;
+        z-index: 7000;
+    }
+
+    /* ✅ hide desktop users panel */
+    .desktop-users-panel {
+        display: none !important;
+    }
+
+    /* ✅ Drawer panel visible in mobile */
+    .mobile-users-panel {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 85%;
+        max-width: 320px;
+        height: 100vh;
+
+        /* ✅ IMPORTANT to make it visible */
+        background: rgba(15, 23, 42, 0.98);
+        backdrop-filter: blur(12px);
+
+        border-right: 1px solid rgba(255,255,255,0.14);
+
+        z-index: 9999;
+        transform: translateX(-110%);
+        transition: transform 0.3s ease;
+
+        padding-top: 85px;
+        overflow-y: auto;
+    }
+
+    /* ✅ Drawer opens */
+    .mobile-users-panel.show {
+        transform: translateX(0);
+    }
+
+    /* ✅ Overlay fixed */
+    .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 9998;
+    }
+
+    .overlay.show {
+        display: block;
+    }
+}
+
     </style>
 </head>
 
@@ -532,6 +609,33 @@
     logout.addEventListener('click', onLogout);
 
     connect();
+    // ✅ mobile drawer controls
+const openUsersBtn = document.getElementById("openUsersBtn");
+const closeUsersBtn = document.getElementById("closeUsersBtn");
+const mobileUsersPanel = document.getElementById("mobileUsersPanel");
+const overlay = document.getElementById("overlay");
+
+if(openUsersBtn){
+    openUsersBtn.addEventListener("click", () => {
+        mobileUsersPanel.classList.add("show");
+        overlay.classList.add("show");
+    });
+}
+
+if(closeUsersBtn){
+    closeUsersBtn.addEventListener("click", () => {
+        mobileUsersPanel.classList.remove("show");
+        overlay.classList.remove("show");
+    });
+}
+
+if(overlay){
+    overlay.addEventListener("click", () => {
+        mobileUsersPanel.classList.remove("show");
+        overlay.classList.remove("show");
+    });
+}
+
 </script>
 
 </body>
